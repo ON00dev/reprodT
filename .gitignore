@@ -43,8 +43,3 @@ uploads/video/*            # arquivos de upload efêmeros
 uploads/img/*
 !uploads/video/.gitkeep     # mantém pasta no repo
 !uploads/img/.gitkeep
-
-# FFmpeg (bins grandes – opcionais no repo)
-ffmpeg-win/
-ffmpeg-linux/
-ffmpeg-mac/

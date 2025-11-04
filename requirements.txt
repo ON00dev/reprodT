@@ -1,6 +1,9 @@
 # ReprodT – Terminal Media Player
 # Python 3.9+ required
 
+# Terminal color
+colorama
+
 # Core imaging
 Pillow>=10.0.0
 
@@ -12,4 +15,4 @@ numpy>=1.24.0
 # Opcionalmente, você pode instalar:
 # - pygame (áudio robusto): pip install pygame
 # - pyaudio (alternativo): pip install pyaudio
-# - sounddevice+soundfile (alternativo): pip install sounddevice soundfile
+# - sounddevice+soundfile (alternativo): pip install sounddevice soundfilecolorama
