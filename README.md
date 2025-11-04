@@ -54,13 +54,14 @@ Durante vídeo:
 
 ```
 reprodT/
-├── reprodT.py              # código principal
-├── requirements.txt        # dependências Python
-├── settings.json           # preferências do usuário (gerado)
-├── uploads/
-│   ├── video/              # MP4s enviados ou selecionados
-│   └── img/                # PNG/JPG/WebP
-└── ffmpeg-{win,linux,mac}/ # bins opcionais
+├── requirements.txt            # dependências Python
+├── source/
+|   ├── reprodT.py              # código principal
+|   ├── settings.json           # preferências do usuário (gerado)
+|   ├── uploads/
+│       ├── video/              # MP4s enviados ou selecionados
+│       └── img/                # PNG/JPG/WebP
+|   └── ffmpeg-{win,linux,mac}/ # bins ffmpeg
 ```
 
 ## Requisitos
