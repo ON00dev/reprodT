@@ -1,0 +1,15 @@
+# ReprodT – Terminal Media Player
+# Python 3.9+ required
+
+# Core imaging
+Pillow>=10.0.0
+
+# Numerical processing
+numpy>=1.24.0
+
+# (Áudio) Nenhuma dependência obrigatória.
+# No Windows, o backend nativo winsound é usado automaticamente.
+# Opcionalmente, você pode instalar:
+# - pygame (áudio robusto): pip install pygame
+# - pyaudio (alternativo): pip install pyaudio
+# - sounddevice+soundfile (alternativo): pip install sounddevice soundfile
