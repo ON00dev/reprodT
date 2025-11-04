@@ -41,7 +41,22 @@ if AUDIO_BACKEND is None:
             except ImportError:
                 AUDIO_BACKEND = None
 
-SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
+def _base_dir():
+    """Base para recursos empacotados.
+    Se rodando como executável PyInstaller (--onefile), retorna sys._MEIPASS.
+    Caso contrário, retorna o diretório do script.
+    """
+    try:
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass and os.path.isdir(meipass):
+            return meipass
+    except Exception:
+        pass
+    return os.path.dirname(os.path.abspath(__file__))
+
+BASE_DIR = _base_dir()
+EXE_DIR = os.path.dirname(getattr(sys, 'executable', sys.argv[0])) if getattr(sys, 'frozen', False) else None
+SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
 def load_settings():
     defaults = {"cols": 100, "fps_limit": 60, "max_rows": 0, "audio_enabled": True, "preset_auto": False}
@@ -76,10 +91,23 @@ def _find_ffmpeg():
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)
+    base_dir = BASE_DIR
+    exe_dir = EXE_DIR
 
     # Priorizar binários locais específicos por OS
     local_candidates = []
     if os.name == "nt":
+        # PyInstaller base_dir e diretório do executável (quando congelado)
+        if base_dir:
+            local_candidates += [
+                os.path.join(base_dir, "ffmpeg-win", "ffmpeg.exe"),
+                os.path.join(base_dir, "ffmpeg-win", "bin", "ffmpeg.exe"),
+            ]
+        if exe_dir:
+            local_candidates += [
+                os.path.join(exe_dir, "ffmpeg-win", "ffmpeg.exe"),
+                os.path.join(exe_dir, "ffmpeg-win", "bin", "ffmpeg.exe"),
+            ]
         local_candidates += [
             os.path.join(script_dir, "ffmpeg-win", "ffmpeg.exe"),
             os.path.join(script_dir, "ffmpeg-win", "bin", "ffmpeg.exe"),
@@ -96,6 +124,16 @@ def _find_ffmpeg():
             os.path.join(parent_dir, "ffmpeg.exe"),
         ]
     elif sys.platform == "darwin":
+        if base_dir:
+            local_candidates += [
+                os.path.join(base_dir, "ffmpeg-mac", "ffmpeg"),
+                os.path.join(base_dir, "ffmpeg-mac", "bin", "ffmpeg"),
+            ]
+        if exe_dir:
+            local_candidates += [
+                os.path.join(exe_dir, "ffmpeg-mac", "ffmpeg"),
+                os.path.join(exe_dir, "ffmpeg-mac", "bin", "ffmpeg"),
+            ]
         local_candidates += [
             os.path.join(script_dir, "ffmpeg-mac", "ffmpeg"),
             os.path.join(script_dir, "ffmpeg-mac", "bin", "ffmpeg"),
@@ -108,6 +146,18 @@ def _find_ffmpeg():
         ]
     else:
         # Linux e outros Unix
+        if base_dir:
+            local_candidates += [
+                os.path.join(base_dir, "ffmpeg-linux", "ffmpeg"),
+                os.path.join(base_dir, "ffmpeg-linux", "bin", "ffmpeg"),
+                os.path.join(base_dir, "ffmpeg-linux", "ffmpeg-master-latest-linux64-lgpl", "ffmpeg"),
+            ]
+        if exe_dir:
+            local_candidates += [
+                os.path.join(exe_dir, "ffmpeg-linux", "ffmpeg"),
+                os.path.join(exe_dir, "ffmpeg-linux", "bin", "ffmpeg"),
+                os.path.join(exe_dir, "ffmpeg-linux", "ffmpeg-master-latest-linux64-lgpl", "ffmpeg"),
+            ]
         local_candidates += [
             os.path.join(script_dir, "ffmpeg-linux", "ffmpeg"),
             os.path.join(script_dir, "ffmpeg-linux", "bin", "ffmpeg"),
@@ -162,10 +212,22 @@ def _find_ffprobe():
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)
+    base_dir = BASE_DIR
+    exe_dir = EXE_DIR
 
     # Priorizar binários locais específicos por OS
     local_candidates = []
     if os.name == "nt":
+        if base_dir:
+            local_candidates += [
+                os.path.join(base_dir, "ffmpeg-win", "ffprobe.exe"),
+                os.path.join(base_dir, "ffmpeg-win", "bin", "ffprobe.exe"),
+            ]
+        if exe_dir:
+            local_candidates += [
+                os.path.join(exe_dir, "ffmpeg-win", "ffprobe.exe"),
+                os.path.join(exe_dir, "ffmpeg-win", "bin", "ffprobe.exe"),
+            ]
         local_candidates += [
             os.path.join(script_dir, "ffmpeg-win", "ffprobe.exe"),
             os.path.join(script_dir, "ffmpeg-win", "bin", "ffprobe.exe"),
@@ -181,6 +243,16 @@ def _find_ffprobe():
             os.path.join(parent_dir, "ffprobe.exe"),
         ]
     elif sys.platform == "darwin":
+        if base_dir:
+            local_candidates += [
+                os.path.join(base_dir, "ffmpeg-mac", "ffprobe"),
+                os.path.join(base_dir, "ffmpeg-mac", "bin", "ffprobe"),
+            ]
+        if exe_dir:
+            local_candidates += [
+                os.path.join(exe_dir, "ffmpeg-mac", "ffprobe"),
+                os.path.join(exe_dir, "ffmpeg-mac", "bin", "ffprobe"),
+            ]
         local_candidates += [
             os.path.join(script_dir, "ffmpeg-mac", "ffprobe"),
             os.path.join(script_dir, "ffmpeg-mac", "bin", "ffprobe"),
@@ -193,6 +265,18 @@ def _find_ffprobe():
         ]
     else:
         # Linux e outros Unix
+        if base_dir:
+            local_candidates += [
+                os.path.join(base_dir, "ffmpeg-linux", "ffprobe"),
+                os.path.join(base_dir, "ffmpeg-linux", "bin", "ffprobe"),
+                os.path.join(base_dir, "ffmpeg-linux", "ffmpeg-master-latest-linux64-lgpl", "ffprobe"),
+            ]
+        if exe_dir:
+            local_candidates += [
+                os.path.join(exe_dir, "ffmpeg-linux", "ffprobe"),
+                os.path.join(exe_dir, "ffmpeg-linux", "bin", "ffprobe"),
+                os.path.join(exe_dir, "ffmpeg-linux", "ffmpeg-master-latest-linux64-lgpl", "ffprobe"),
+            ]
         local_candidates += [
             os.path.join(script_dir, "ffmpeg-linux", "ffprobe"),
             os.path.join(script_dir, "ffmpeg-linux", "bin", "ffprobe"),
@@ -935,7 +1019,6 @@ def terminal_ui_loop():
                 print("Falha no upload.")
                 continue
             file_ext = os.path.splitext(uploaded_path)[1].lower()
-            ephemeral = True
             try:
                 if file_ext == '.mp4':
                     print(f"\nReproduzindo vídeo: {os.path.basename(uploaded_path)}")
@@ -969,13 +1052,9 @@ def terminal_ui_loop():
                 else:
                     print("Tipo de arquivo não suportado.")
             finally:
-                # Descartar upload efêmero
-                if ephemeral and os.path.isfile(uploaded_path):
-                    try:
-                        os.remove(uploaded_path)
-                        print("Arquivo descartado após reprodução.")
-                    except Exception:
-                        pass
+                # Manter upload persistente para reutilização futura
+                if os.path.isfile(uploaded_path):
+                    print("Arquivo mantido em uploads para reprodução futura.")
 
         elif choice == '2':
             sel = choose_from_directory(video_dir, {'.mp4'})
