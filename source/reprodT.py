@@ -5,12 +5,12 @@ import colorama
 from colorama import Fore, Style
 import time
 
-# Inicializa Colorama para garantir cores no Windows e outros ambientes
+# Inicializa Colorama apenas para mensagens (sem converter/embrulhar stdout)
 try:
     colorama.just_fix_windows_console()
-    # convert=True força conversão dos códigos ANSI para consoles que não suportam VT
-    # strip=False mantém os códigos quando o console já suporta VT (Windows Terminal, VSCode, etc.)
-    colorama.init(autoreset=True, convert=True, strip=False)
+    # wrap=False evita interferir na escrita das sequências ANSI dos frames
+    # convert=False e strip=False preservam as sequências ANSI reais (24-bit)
+    colorama.init(autoreset=True, wrap=False, convert=False, strip=False)
 except Exception:
     pass
 
@@ -240,13 +240,23 @@ def _find_ffprobe():
     return None
 
 def _enable_windows_ansi():
-    # Usa Colorama para garantir suporte a ANSI no Windows
-    try:
-        colorama.just_fix_windows_console()
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+    if os.name == "nt":
+        try:
+            import msvcrt
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            h = kernel32.GetStdHandle(-11)
+            mode = ctypes.c_uint()
+            kernel32.GetConsoleMode(h, ctypes.byref(mode))
+            # ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+            kernel32.SetConsoleMode(h, mode.value | 0x0004)
+        except Exception:
+            pass
+        try:
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
 
 def _truecolor_supported():
     if os.name == "nt":
@@ -856,9 +866,9 @@ def settings_menu(settings):
         print(f"  Áudio: {'Ativado' if settings['audio_enabled'] else 'Desativado'}")
         print(f"  Preset automático: {'Ativado' if settings.get('preset_auto') else 'Desativado'}")
         print("\n1. Alterar colunas\n2. Alterar altura máxima (linhas)\n3. Alterar FPS limite\n4. Alternar áudio\n5. Alternar preset automático\n6. Voltar")
-        ch = input(Fore.BLUE+"Escolha: ").strip()
+        ch = input(Fore.BLUE+"Escolha: "+Style.RESET_ALL).strip()
         if ch == '1':
-            v = input(Fore.BLUE+"Novo valor de colunas (>=20): ").strip()
+            v = input(Fore.BLUE+"Novo valor de colunas (>=20): "+Style.RESET_ALL).strip()
             try:
                 iv = int(v)
                 settings['cols'] = max(20, iv)
@@ -866,7 +876,7 @@ def settings_menu(settings):
                 print("Valor inválido.")
 
         elif ch == '2':
-            v = input(Fore.BLUE+"Nova altura máxima em linhas (0 = ilimitado): ").strip()
+            v = input(Fore.BLUE+"Nova altura máxima em linhas (0 = ilimitado): "+Style.RESET_ALL).strip()
             try:
                 iv = int(v)
                 settings['max_rows'] = max(0, iv)
@@ -874,7 +884,7 @@ def settings_menu(settings):
                 print("Valor inválido.")
 
         elif ch == '3':
-            v = input(Fore.BLUE+"Novo FPS limite (>=1): ").strip()
+            v = input(Fore.BLUE+"Novo FPS limite (>=1): "+Style.RESET_ALL).strip()
             try:
                 iv = int(v)
                 settings['fps_limit'] = max(1, iv)
@@ -913,7 +923,7 @@ def terminal_ui_loop():
         print("4. Configurações")
         print("5. Sobre")
         print("6. Sair")
-        choice = input(Fore.BLUE+"\nEscolha uma opção (1-6): ").strip()
+        choice = input(Fore.BLUE+"\nEscolha uma opção (1-6): "+Style.RESET_ALL).strip()
 
         if choice == '1':
             file_path = select_file_for_upload()
@@ -1004,11 +1014,11 @@ def terminal_ui_loop():
             settings_menu(settings)
 
         elif choice == '5':
-            print(Fore.GREEN+"\n" + ABOUT_TEXT + "\n")
+            print(Fore.GREEN+"\n" + ABOUT_TEXT + "\n"+Style.RESET_ALL)
             time.sleep(10)
 
         elif choice == '6':
-            print(Fore.YELLOW+"Saindo...")
+            print(Fore.YELLOW+"Saindo..."+Style.RESET_ALL)
             break
         else:
             print("Opção inválida.")
@@ -1017,7 +1027,7 @@ def play_video_file(path, cols, fps_limit, audio_enabled, max_rows):
     """Reproduz um arquivo de vídeo com fallback robusto de resolução."""
     npath = _normalize_path(path)
     if not _find_ffmpeg():
-        sys.stderr.write(Fore.RED+"ffmpeg não encontrado para reproduzir vídeo. Instale ou coloque o binário ao lado do script.\n")
+        sys.stderr.write(Fore.RED+"ffmpeg não encontrado para reproduzir vídeo. Instale ou coloque o binário ao lado do script.\n"+Style.RESET_ALL)
         return
 
     info = _ffprobe_info(npath)
@@ -1079,7 +1089,7 @@ def play_video_file(path, cols, fps_limit, audio_enabled, max_rows):
 
     proc = _build_ffmpeg_video_proc(npath, w, h, fps_limit)
     if proc is None:
-        sys.stderr.write(Fore.RED+"Não foi possível iniciar decodificação de vídeo (ffmpeg).\n")
+        sys.stderr.write(Fore.RED+"Não foi possível iniciar decodificação de vídeo (ffmpeg).\n"+Style.RESET_ALL)
         ki.stop()
         if audio:
             audio.stop()
@@ -1147,7 +1157,7 @@ def play_video_file(path, cols, fps_limit, audio_enabled, max_rows):
 
     # Se nenhum quadro foi renderizado e não há áudio, informe falha mais clara
     if frame_index == 0 and audio is None:
-        sys.stderr.write(Fore.RED+"Falha ao decodificar vídeo. Verifique se o arquivo é válido e se o FFmpeg suporta o codec.\n")
+        sys.stderr.write(Fore.RED+"Falha ao decodificar vídeo. Verifique se o arquivo é válido e se o FFmpeg suporta o codec.\n"+Style.RESET_ALL)
 
     ki.stop()
     if audio:
@@ -1163,8 +1173,8 @@ def main():
     _enable_windows_ansi()
     _clear_screen()
     if not _find_ffmpeg():
-        sys.stderr.write(Fore.YELLOW+"ffmpeg não encontrado. Instale e/ou adicione ao PATH, ou coloque o binário em ./bin/ffmpeg(.exe) ao lado do script.\n")
-        sys.stderr.write(Fore.YELLOW+"Abra o programa mesmo assim para imagens estáticas e configuração.\n")
+        sys.stderr.write(Fore.YELLOW+"ffmpeg não encontrado. Instale e/ou adicione ao PATH, ou coloque o binário em ./bin/ffmpeg(.exe) ao lado do script.\n"+Style.RESET_ALL)
+        sys.stderr.write(Fore.YELLOW+"Abra o programa mesmo assim para imagens estáticas e configuração.\n"+Style.RESET_ALL)
     terminal_ui_loop()
     return
 
