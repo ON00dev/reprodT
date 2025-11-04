@@ -1,0 +1,4 @@
+# Track ffmpeg binaries with Git LFS
+source/ffmpeg-linux/** filter=lfs diff=lfs merge=lfs -text
+source/ffmpeg-mac/** filter=lfs diff=lfs merge=lfs -text
+source/ffmpeg-win/** filter=lfs diff=lfs merge=lfs -text
